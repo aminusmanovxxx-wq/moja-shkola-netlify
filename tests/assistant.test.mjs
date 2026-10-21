@@ -8,18 +8,17 @@ const makeRequest = (body, method = 'POST') => new Request('http://localhost/.ne
   ...(method === 'GET' ? {} : { body: JSON.stringify(body) }),
 });
 
-async function withoutAiKeys(callback) {
-  const oldGemini = process.env.GEMINI_API_KEY;
-  const oldOpenAI = process.env.OPENAI_API_KEY;
-  delete process.env.GEMINI_API_KEY;
-  delete process.env.OPENAI_API_KEY;
+const envKeys = ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_MODEL', 'SCHEDULE_ADMIN_PIN'];
+async function withoutCloudflareConfig(callback) {
+  const previous = Object.fromEntries(envKeys.map(key => [key, process.env[key]]));
+  for (const key of envKeys) delete process.env[key];
   try {
     return await callback();
   } finally {
-    if (oldGemini === undefined) delete process.env.GEMINI_API_KEY;
-    else process.env.GEMINI_API_KEY = oldGemini;
-    if (oldOpenAI === undefined) delete process.env.OPENAI_API_KEY;
-    else process.env.OPENAI_API_KEY = oldOpenAI;
+    for (const key of envKeys) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
   }
 }
 
@@ -34,15 +33,17 @@ test('ИИ endpoint rejects unknown operation names', async () => {
 });
 
 test('protected schedule import is disabled when a server PIN is not configured', async () => {
-  delete globalThis.Netlify;
-  const response = await handler(makeRequest({ type: 'analyze_schedule', adminImport: true, adminPin: '1414', text: 'Пн: Математика' }), { ip: 'test-pin-missing' });
-  const body = await response.json();
-  assert.equal(response.status, 503);
-  assert.equal(body.code, 'PIN_NOT_CONFIGURED');
+  await withoutCloudflareConfig(async () => {
+    delete globalThis.Netlify;
+    const response = await handler(makeRequest({ type: 'analyze_schedule', adminImport: true, adminPin: '1414', text: 'Пн: Математика' }), { ip: 'test-pin-missing' });
+    const body = await response.json();
+    assert.equal(response.status, 503);
+    assert.equal(body.code, 'PIN_NOT_CONFIGURED');
+  });
 });
 
-test('AI endpoint reports missing server keys instead of returning fake answers', async () => {
-  await withoutAiKeys(async () => {
+test('AI endpoint reports missing Cloudflare credentials instead of returning fake answers', async () => {
+  await withoutCloudflareConfig(async () => {
     delete globalThis.Netlify;
     const response = await handler(makeRequest({ type: 'chat', question: 'Сколько будет 2+2?' }), { ip: 'test-key-missing' });
     const body = await response.json();
@@ -52,7 +53,7 @@ test('AI endpoint reports missing server keys instead of returning fake answers'
 });
 
 test('ordinary schedule analysis does not require the admin PIN', async () => {
-  await withoutAiKeys(async () => {
+  await withoutCloudflareConfig(async () => {
     delete globalThis.Netlify;
     const response = await handler(makeRequest({ type: 'analyze_schedule', text: 'Пн — 1. Математика' }), { ip: 'test-regular-schedule' });
     const body = await response.json();
@@ -61,43 +62,42 @@ test('ordinary schedule analysis does not require the admin PIN', async () => {
   });
 });
 
-test('Gemini provider keeps its API key server-side and parses JSON responses', async () => {
-  const oldGemini = process.env.GEMINI_API_KEY;
-  const oldOpenAI = process.env.OPENAI_API_KEY;
-  const oldModel = process.env.GEMINI_MODEL;
+test('Cloudflare Workers AI provider uses the secret server token and returns JSON result', async () => {
+  const previous = Object.fromEntries(['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_MODEL'].map(key => [key, process.env[key]]));
   const oldFetch = globalThis.fetch;
-  process.env.GEMINI_API_KEY = 'test-key-not-real';
-  delete process.env.OPENAI_API_KEY;
-  delete process.env.GEMINI_MODEL;
+  process.env.CLOUDFLARE_API_TOKEN = 'test-token-not-real';
+  process.env.CLOUDFLARE_ACCOUNT_ID = 'a'.repeat(32);
+  process.env.CLOUDFLARE_MODEL = '@cf/google/gemma-4-26b-a4b-it';
   delete globalThis.Netlify;
 
-  let observedRequest;
+  let captured;
   globalThis.fetch = async (url, options) => {
-    observedRequest = { url: String(url), options, payload: JSON.parse(options.body) };
+    captured = { url: String(url), options, body: JSON.parse(options.body) };
     return Response.json({
-      candidates: [{ content: { parts: [{ text: JSON.stringify({
-        answer: '4', explanation: 'Два плюс два равно четырём.', steps: [], check: 'Посчитай по одному.'
-      }) }] } }]
+      id: 'cf-test',
+      model: '@cf/google/gemma-4-26b-a4b-it',
+      choices: [{ message: { role: 'assistant', content: JSON.stringify({
+        answer: '4', explanation: 'Два плюс два равно четырём.', steps: [], check: 'Сосчитай по одному.'
+      }) }, finish_reason: 'stop', index: 0 }],
     });
   };
 
   try {
-    const response = await handler(makeRequest({ type: 'chat', question: 'Сколько будет 2+2?' }), { ip: 'test-gemini-key' });
+    const response = await handler(makeRequest({ type: 'chat', question: 'Сколько будет 2+2?' }), { ip: 'test-cloudflare' });
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(body.ok, true);
-    assert.equal(body.model, 'gemini-3.5-flash-lite');
     assert.equal(body.result.answer, '4');
-    assert.match(observedRequest.url, /models\/gemini-3\.5-flash-lite:generateContent$/);
-    assert.equal(observedRequest.options.headers['x-goog-api-key'], 'test-key-not-real');
-    assert.equal(observedRequest.payload.generationConfig.responseMimeType, 'application/json');
+    assert.equal(body.model, '@cf/google/gemma-4-26b-a4b-it');
+    assert.match(captured.url, /accounts\/[a-f0-9]{32}\/ai\/v1\/chat\/completions$/);
+    assert.equal(captured.options.headers.get('authorization'), 'Bearer test-token-not-real');
+    assert.equal(captured.body.model, '@cf/google/gemma-4-26b-a4b-it');
+    assert.equal(captured.body.messages[1].content.includes('Сколько будет 2+2?'), true);
   } finally {
     globalThis.fetch = oldFetch;
-    if (oldGemini === undefined) delete process.env.GEMINI_API_KEY;
-    else process.env.GEMINI_API_KEY = oldGemini;
-    if (oldOpenAI === undefined) delete process.env.OPENAI_API_KEY;
-    else process.env.OPENAI_API_KEY = oldOpenAI;
-    if (oldModel === undefined) delete process.env.GEMINI_MODEL;
-    else process.env.GEMINI_MODEL = oldModel;
+    for (const key of ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_MODEL']) {
+      if (previous[key] === undefined) delete process.env[key];
+      else process.env[key] = previous[key];
+    }
   }
 });
