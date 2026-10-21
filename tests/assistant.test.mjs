@@ -92,7 +92,7 @@ test('Cloudflare Workers AI provider uses the secret server token and returns JS
     assert.match(captured.url, /accounts\/[a-f0-9]{32}\/ai\/v1\/chat\/completions$/);
     assert.equal(captured.options.headers.get('authorization'), 'Bearer test-token-not-real');
     assert.equal(captured.body.model, '@cf/google/gemma-4-26b-a4b-it');
-    assert.equal(captured.body.messages[1].content.includes('Сколько будет 2+2?'), true);
+    assert.equal(captured.body.messages[1].content.some(part => part.type === 'text' && part.text.includes('Сколько будет 2+2?')), true);
   } finally {
     globalThis.fetch = oldFetch;
     for (const key of ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_MODEL']) {
