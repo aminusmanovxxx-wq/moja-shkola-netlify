@@ -8,8 +8,8 @@ const makeRequest = (body, method = 'POST') => new Request('http://localhost/.ne
   ...(method === 'GET' ? {} : { body: JSON.stringify(body) }),
 });
 
-const envKeys = ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_MODEL', 'SCHEDULE_ADMIN_PIN'];
-async function withoutCloudflareConfig(callback) {
+const envKeys = ['OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_MODEL', 'SCHEDULE_ADMIN_PIN'];
+async function withoutGatewayConfig(callback) {
   const previous = Object.fromEntries(envKeys.map(key => [key, process.env[key]]));
   for (const key of envKeys) delete process.env[key];
   try {
@@ -33,7 +33,7 @@ test('ИИ endpoint rejects unknown operation names', async () => {
 });
 
 test('protected schedule import is disabled when a server PIN is not configured', async () => {
-  await withoutCloudflareConfig(async () => {
+  await withoutGatewayConfig(async () => {
     delete globalThis.Netlify;
     const response = await handler(makeRequest({ type: 'analyze_schedule', adminImport: true, adminPin: '1414', text: 'Пн: Математика' }), { ip: 'test-pin-missing' });
     const body = await response.json();
@@ -42,60 +42,63 @@ test('protected schedule import is disabled when a server PIN is not configured'
   });
 });
 
-test('AI endpoint reports missing Cloudflare credentials instead of returning fake answers', async () => {
-  await withoutCloudflareConfig(async () => {
+test('AI Gateway reports first-deploy activation requirement rather than returning fake answers', async () => {
+  await withoutGatewayConfig(async () => {
     delete globalThis.Netlify;
-    const response = await handler(makeRequest({ type: 'chat', question: 'Сколько будет 2+2?' }), { ip: 'test-key-missing' });
+    const response = await handler(makeRequest({ type: 'chat', question: 'Сколько будет 2+2?' }), { ip: 'test-gateway-missing' });
     const body = await response.json();
     assert.equal(response.status, 503);
-    assert.equal(body.code, 'AI_NOT_CONFIGURED');
+    assert.equal(body.code, 'AI_GATEWAY_NOT_READY');
   });
 });
 
 test('ordinary schedule analysis does not require the admin PIN', async () => {
-  await withoutCloudflareConfig(async () => {
+  await withoutGatewayConfig(async () => {
     delete globalThis.Netlify;
     const response = await handler(makeRequest({ type: 'analyze_schedule', text: 'Пн — 1. Математика' }), { ip: 'test-regular-schedule' });
     const body = await response.json();
     assert.equal(response.status, 503);
-    assert.equal(body.code, 'AI_NOT_CONFIGURED');
+    assert.equal(body.code, 'AI_GATEWAY_NOT_READY');
   });
 });
 
-test('Cloudflare Workers AI provider uses the secret server token and returns JSON result', async () => {
-  const previous = Object.fromEntries(['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_MODEL'].map(key => [key, process.env[key]]));
+test('Netlify AI Gateway SDK receives runtime-injected credentials and returns structured JSON', async () => {
+  const previous = Object.fromEntries(['OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_MODEL'].map(key => [key, process.env[key]]));
   const oldFetch = globalThis.fetch;
-  process.env.CLOUDFLARE_API_TOKEN = 'test-token-not-real';
-  process.env.CLOUDFLARE_ACCOUNT_ID = 'a'.repeat(32);
-  process.env.CLOUDFLARE_MODEL = '@cf/google/gemma-4-26b-a4b-it';
+  process.env.OPENAI_API_KEY = 'gateway-test-key-not-real';
+  process.env.OPENAI_BASE_URL = 'https://gateway.example.test/v1';
+  delete process.env.OPENAI_MODEL;
   delete globalThis.Netlify;
 
   let captured;
   globalThis.fetch = async (url, options) => {
     captured = { url: String(url), options, body: JSON.parse(options.body) };
     return Response.json({
-      id: 'cf-test',
-      model: '@cf/google/gemma-4-26b-a4b-it',
-      choices: [{ message: { role: 'assistant', content: JSON.stringify({
+      id: 'gateway-test',
+      object: 'chat.completion',
+      created: 1,
+      model: 'gpt-4o-mini',
+      choices: [{ index: 0, finish_reason: 'stop', message: { role: 'assistant', content: JSON.stringify({
         answer: '4', explanation: 'Два плюс два равно четырём.', steps: [], check: 'Сосчитай по одному.'
-      }) }, finish_reason: 'stop', index: 0 }],
+      }) } }],
     });
   };
 
   try {
-    const response = await handler(makeRequest({ type: 'chat', question: 'Сколько будет 2+2?' }), { ip: 'test-cloudflare' });
+    const response = await handler(makeRequest({ type: 'chat', question: 'Сколько будет 2+2?' }), { ip: 'test-netlify-gateway' });
     const body = await response.json();
     assert.equal(response.status, 200);
     assert.equal(body.ok, true);
     assert.equal(body.result.answer, '4');
-    assert.equal(body.model, '@cf/google/gemma-4-26b-a4b-it');
-    assert.match(captured.url, /accounts\/[a-f0-9]{32}\/ai\/v1\/chat\/completions$/);
-    assert.equal(captured.options.headers.get('authorization'), 'Bearer test-token-not-real');
-    assert.equal(captured.body.model, '@cf/google/gemma-4-26b-a4b-it');
+    assert.equal(body.model, 'gpt-4o-mini');
+    assert.match(captured.url, /gateway\.example\.test\/v1\/chat\/completions$/);
+    assert.equal(captured.options.headers.get('authorization'), 'Bearer gateway-test-key-not-real');
+    assert.equal(captured.body.model, 'gpt-4o-mini');
+    assert.equal(captured.body.response_format.type, 'json_object');
     assert.equal(captured.body.messages.some(message => JSON.stringify(message.content).includes('Сколько будет 2+2?')), true);
   } finally {
     globalThis.fetch = oldFetch;
-    for (const key of ['CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_MODEL']) {
+    for (const key of ['OPENAI_API_KEY', 'OPENAI_BASE_URL', 'OPENAI_MODEL']) {
       if (previous[key] === undefined) delete process.env[key];
       else process.env[key] = previous[key];
     }
