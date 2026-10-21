@@ -1,0 +1,30 @@
+name: Validate project
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Restore source archive
+        shell: bash
+        run: |
+          cat source-part-*.b64 > "$RUNNER_TEMP/source.b64"
+          base64 -d "$RUNNER_TEMP/source.b64" > "$RUNNER_TEMP/source.tar.gz"
+          mkdir -p "$RUNNER_TEMP/source"
+          tar -xzf "$RUNNER_TEMP/source.tar.gz" -C "$RUNNER_TEMP/source"
+      - name: Install dependencies and run tests
+        shell: bash
+        run: |
+          cd "$RUNNER_TEMP/source/moja-shkola-netlify"
+          npm install --no-audit --no-fund
+          npm test
+          npm run typecheck
