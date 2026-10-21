@@ -9,9 +9,10 @@
     "typecheck": "node --check public/app.js && node --check public/schedule.js && node --check netlify/functions/assistant.mjs && node --check netlify/functions/cloud-sync.mjs"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=22"
   },
   "dependencies": {
-    "@netlify/blobs": "^8.1.0"
+    "@netlify/blobs": "^8.1.0",
+    "openai": "^7.38.0"
   }
 }
