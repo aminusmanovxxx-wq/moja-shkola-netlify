@@ -1,3 +1,5 @@
+import OpenAI from "openai";
+
 const MODEL_DEFAULT = "gpt-4o-mini";
 const WINDOW_MS = 60_000;
 const LIMIT_PER_WINDOW = 14;
@@ -6,7 +8,12 @@ const calls = new Map();
 function env(name) {
   try {
     const value = Netlify.env.get(name);
-    return value || undefined;
+    if (value) return value;
+  } catch {
+    // Netlify.env is not present in local unit tests.
+  }
+  try {
+    return typeof process !== "undefined" ? process.env?.[name] || undefined : undefined;
   } catch {
     return undefined;
   }
@@ -94,26 +101,25 @@ export default async (request, context) => {
   }
 
   const apiKey = env("OPENAI_API_KEY");
-  if (!apiKey) return json({ code: "AI_NOT_CONFIGURED", error: "Настоящий ИИ пока не подключён. Добавь OPENAI_API_KEY в переменные окружения Netlify и повтори попытку." }, 503);
+  if (!apiKey) return json({
+    code: "AI_NOT_CONFIGURED",
+    error: "Настоящий ИИ ещё не активирован. Выполни первый production-деплой в Netlify с включёнными AI Features либо добавь собственный OPENAI_API_KEY в переменные окружения Netlify."
+  }, 503);
 
   try {
     const messages = getMessages(type, payload);
     const model = env("OPENAI_MODEL") || MODEL_DEFAULT;
-    const upstream = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${apiKey}`, "Content-Type": "application/json" },
-      body: JSON.stringify({ model, messages, response_format: { type: "json_object" }, max_tokens: 1800, temperature: 0.3 }),
-      signal: AbortSignal.timeout(50_000),
-    });
-    if (!upstream.ok) {
-      const upstreamText = await upstream.text().catch(() => "");
-      console.error("AI provider error", upstream.status, upstreamText.slice(0, 350));
-      if (upstream.status === 401 || upstream.status === 403) return json({ code: "AI_AUTH_ERROR", error: "Серверный ключ ИИ отклонён. Проверь OPENAI_API_KEY в Netlify." }, 502);
-      if (upstream.status === 429) return json({ code: "AI_RATE_LIMIT", error: "У ИИ сейчас достигнут лимит запросов. Попробуй позже." }, 429);
-      return json({ code: "AI_UPSTREAM_ERROR", error: "ИИ-сервис временно не ответил. Попробуй ещё раз чуть позже." }, 502);
-    }
-    const body = await upstream.json();
-    const raw = body.choices?.[0]?.message?.content;
+    // Netlify AI Gateway injects OPENAI_API_KEY and OPENAI_BASE_URL at runtime.
+    // OpenAI's official SDK picks them up automatically; a private key never enters the browser.
+    const client = new OpenAI();
+    const completion = await client.chat.completions.create({
+      model,
+      messages,
+      response_format: { type: "json_object" },
+      max_tokens: 1800,
+      temperature: 0.3,
+    }, { signal: AbortSignal.timeout(50_000) });
+    const raw = completion.choices?.[0]?.message?.content;
     if (!raw) return json({ code: "AI_EMPTY_RESPONSE", error: "ИИ вернул пустой ответ. Попробуй перефотографировать задание." }, 502);
     let result;
     try {
@@ -122,12 +128,15 @@ export default async (request, context) => {
       console.error("AI response was not valid JSON", raw.slice(0, 300));
       return json({ code: "AI_INVALID_RESPONSE", error: "Не получилось разобрать ответ ИИ. Попробуй повторить запрос." }, 502);
     }
-    return json({ ok: true, model, result });
+    return json({ ok: true, model: completion.model || model, result });
   } catch (error) {
     const message = error instanceof Error ? error.message : "unknown";
     if (message === "UNSUPPORTED_IMAGE_TYPE") return json({ error: "Поддерживаются изображения JPG, PNG, WEBP и GIF." }, 415);
     if (message === "IMAGE_TOO_LARGE") return json({ error: "Изображение слишком большое. Выбери более лёгкий скриншот." }, 413);
-    console.error("Assistant function failed", message);
+    const status = Number(error?.status) || 0;
+    if (status === 401 || status === 403) return json({ code: "AI_AUTH_ERROR", error: "ИИ-шлюз отклонил запрос. Проверь AI Features в Netlify либо настройки собственного ключа." }, 502);
+    if (status === 429) return json({ code: "AI_RATE_LIMIT", error: "У ИИ сейчас достигнут лимит запросов или кредитов. Попробуй позже." }, 429);
+    console.error("Assistant function failed", status, message.slice(0, 350));
     return json({ code: "AI_REQUEST_FAILED", error: "Не удалось связаться с ИИ-сервисом. Проверь соединение и настройки Netlify." }, 502);
   }
 };
