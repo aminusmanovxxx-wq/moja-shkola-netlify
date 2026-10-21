@@ -425,14 +425,14 @@ async function analyzeHomework() {
     resultContainer.innerHTML = `<h3>Вот что удалось распознать</h3>${assignments.length ? assignments.map((item, i) => `<div class="analysis-item"><strong>${escapeHtml(item.subject || `Задание ${i + 1}`)}</strong><p>${escapeHtml(item.task || '')}</p>${item.notes ? `<p>Примечание: ${escapeHtml(item.notes)}</p>` : ''}</div>`).join('') : '<p style="font-size:10px;color:var(--muted)">Список не распознан. Попробуй более чёткое фото или вставь текст.</p>'}<p class="helper-text">Распознанный текст пока не сохранён. Проверь его перед добавлением.</p><div class="result-actions"><button class="primary-button" data-result-action="save-homework" ${assignments.length ? '' : 'disabled'}>Добавить в ДЗ</button><button class="soft-button" data-result-action="clear-homework">Отмена</button></div>${result.notes ? `<p class="helper-text">${escapeHtml(result.notes)}</p>` : ''}`;
     toast(`Распознано заданий: ${assignments.length}. Проверь текст до сохранения.`, 'success');
   } catch (error) {
-    if (error.code === 'AI_NOT_CONFIGURED' && text && !pendingHomeworkImage) {
+    if (['AI_NOT_CONFIGURED', 'AI_GATEWAY_NOT_READY'].includes(error.code) && text && !pendingHomeworkImage) {
       const result = parseHomeworkTextLocally(text, document.getElementById('homework-class').value);
       homeworkAnalysis = { ...result, classLabel: document.getElementById('homework-class').value, dueDate: selectedDueDate() };
       const assignments = result.assignments; resultContainer.classList.remove('hidden');
       resultContainer.innerHTML = `<h3>Черновик разбора · без ИИ</h3>${assignments.length ? assignments.map((item,i) => `<div class="analysis-item"><strong>${escapeHtml(item.subject || `Задание ${i+1}`)}</strong><p>${escapeHtml(item.task)}</p></div>`).join('') : '<p class="helper-text">Не удалось выделить строки. Раздели задания переносами строк.</p>'}<p class="helper-text">${escapeHtml(result.notes)}</p><div class="result-actions"><button class="primary-button" data-result-action="save-homework" ${assignments.length ? '' : 'disabled'}>Добавить в ДЗ</button><button class="soft-button" data-result-action="clear-homework">Отмена</button></div>`;
       document.getElementById('ai-availability').textContent = 'ИИ-сервер не настроен. Текст можно разобрать локально; распознавание фото и ответы нейросети требуют подключённого ИИ.';
       toast('Создан черновик из текста. Проверь перед сохранением.', 'success');
-    } else { showRequestError(resultContainer, error, text ? 'homework' : null); if (error.code === 'AI_NOT_CONFIGURED') document.getElementById('ai-availability').textContent = 'Настоящий ИИ не подключён: для нейросетевых ответов нужен OPENAI_API_KEY в Netlify.'; toast(error.message, 'error'); }
+    } else { showRequestError(resultContainer, error, text ? 'homework' : null); if (['AI_NOT_CONFIGURED', 'AI_GATEWAY_NOT_READY'].includes(error.code)) document.getElementById('ai-availability').textContent = 'Настоящий ИИ пока не активирован на сервере. Включи AI Features в Netlify и проверь production-публикацию; вставлять API-ключ в сайт не нужно.'; toast(error.message, 'error'); }
   } finally { button.disabled = false; button.innerHTML = '<span>✳</span> Анализировать задание'; }
 }
 function selectedDueDate() {
@@ -484,7 +484,7 @@ async function prepareDueAssignments(showToast = true) {
       item.solution = solution; item.solutionCreatedAt = new Date().toISOString();
       persist();
     } catch (error) {
-      if (error.code !== 'AI_NOT_CONFIGURED' && showToast) toast(`Не удалось подготовить решение: ${error.message}`, 'error');
+      if (!['AI_NOT_CONFIGURED', 'AI_GATEWAY_NOT_READY'].includes(error.code) && showToast) toast(`Не удалось подготовить решение: ${error.message}`, 'error');
       break;
     } finally { preparingIds.delete(item.id); }
     renderHomework(); renderHome();
@@ -519,7 +519,7 @@ async function analyzeSchedule(image = pendingScheduleImage || pendingAdminImage
     toast(`Расписание распознано: ${items.length} строк. Сохраняй только после проверки.`, 'success');
     document.getElementById('schedule-pin').value = '';
   } catch (error) {
-    if (error.code === 'AI_NOT_CONFIGURED' && !fromSettings && text.trim()) {
+    if (['AI_NOT_CONFIGURED', 'AI_GATEWAY_NOT_READY'].includes(error.code) && !fromSettings && text.trim()) {
       const parsed = parseScheduleTextLocally(text, document.getElementById('schedule-day').value, classLabel); scheduleAnalysis = { items: parsed.scheduleItems, classLabel, notes: parsed.notes };
       output.classList.remove('hidden'); output.innerHTML = `<h3>Черновик расписания · без ИИ</h3>${scheduleAnalysis.items.length ? scheduleAnalysis.items.map(item => `<div class="analysis-item"><strong>${escapeHtml(item.day)} · урок ${escapeHtml(item.lessonNumber)}</strong><p>${escapeHtml(item.subject)}</p></div>`).join('') : '<p class="helper-text">Формат: Пн — 1. Математика, 2. Русский язык.</p>'}<p class="helper-text">${escapeHtml(parsed.notes)}</p><div class="result-actions"><button class="primary-button" data-result-action="save-schedule" ${scheduleAnalysis.items.length ? '' : 'disabled'}>Сохранить расписание</button><button class="soft-button" data-result-action="clear-schedule">Отмена</button></div>`;
       if (status) status.textContent = `Локально выделено уроков: ${scheduleAnalysis.items.length}. Проверь данные.`; toast('Создан черновик расписания из текста.', 'success');
