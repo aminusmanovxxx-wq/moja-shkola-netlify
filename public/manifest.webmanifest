@@ -1,0 +1,18 @@
+{
+  "name": "Моя школа — учебный помощник",
+  "short_name": "Моя школа",
+  "description": "Живое расписание и домашние задания",
+  "lang": "ru",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0d1024",
+  "theme_color": "#11132b",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

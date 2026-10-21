@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#11132b">
+  <meta name="description" content="Моя школа — удобный учебный помощник с живым расписанием и домашними заданиями.">
+  <link rel="manifest" href="/manifest.webmanifest">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <title>Моя школа — учебный помощник</title>
+</head>
+<body>
+  <div id="app" class="app-shell">
+    <div class="ambient ambient-one" aria-hidden="true"></div>
+    <div class="ambient ambient-two" aria-hidden="true"></div>
+    <header class="topbar">
+      <button class="brand lock-button" data-action="home" aria-label="Главная">
+        <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 10.5 16 4l11 6.5v13L16 30 5 23.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m10 15 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="brand-copy"><strong>моя школа</strong><small>УЧЕБНЫЙ ПОМОЩНИК</small></span>
+      </button>
+      <div class="topbar-right">
+        <div class="status-pill"><span class="status-dot"></span><span id="sync-label">Локально готово</span></div>
+        <button class="avatar-button" id="avatar-button" data-action="settings" aria-label="Открыть настройки"><span id="avatar-letter">У</span></button>
+      </div>
+    </header>
+
+    <main class="main-stage" id="main-stage" aria-live="polite">
+      <section class="view view-home active" data-view="home" id="view-home">
+        <div class="home-scroll panel-scroll">
+          <div class="welcome-row">
+            <div>
+              <p class="eyebrow" id="today-label">ТВОЙ УЧЕБНЫЙ ДЕНЬ</p>
+              <h1 id="greeting-title">Привет! <span class="gradient-text">Пора сиять.</span></h1>
+              <p class="muted greeting-subtitle" id="greeting-subtitle">Всё важное для учёбы — в одном месте.</p>
+            </div>
+            <div class="weather-art" id="weather-art" aria-label="Анимация неба по времени суток">
+              <div class="sky-orbit"></div><div class="sun-moon"></div><div class="sky-cloud cloud-a"></div><div class="sky-cloud cloud-b"></div><div class="bird bird-a">⌁</div><div class="bird bird-b">⌁</div><div class="sky-star star-a">✦</div><div class="sky-star star-b">✦</div>
+            </div>
+          </div>
+          <section class="hero-card" id="hero-card">
+            <div class="hero-noise"></div>
+            <div class="hero-content">
+              <div class="hero-meta"><span class="live-badge"><span></span> LIVE РАСПИСАНИЕ</span><span class="date-badge" id="hero-date">Сегодня</span></div>
+              <div class="hero-main" id="hero-main">
+                <p class="hero-kicker" id="phase-kicker">СЕЙЧАС</p>
+                <h2 id="hero-phase-title">Учебный день начинается</h2>
+                <p id="hero-phase-desc">Добавь расписание — и здесь появится текущий урок.</p>
+              </div>
+              <div class="hero-footer"><div class="hero-clock"><span class="clock-glyph">◷</span><strong id="hero-clock">--:--</strong><span id="hero-clock-note">локальное время</span></div><button class="hero-action" data-action="schedule">Открыть расписание <span>↗</span></button></div>
+            </div>
+            <div class="hero-orb orb-large"></div><div class="hero-orb orb-small"></div><div class="hero-grid"></div>
+          </section>
+
+          <div class="section-heading"><div><p class="eyebrow">ТВОЙ ПЛАН</p><h2>На завтра</h2></div><button class="text-button" data-action="homework">Все задания <span>→</span></button></div>
+          <section class="tomorrow-card" id="tomorrow-card">
+            <div class="empty-illustration"><span class="empty-icon">✦</span></div>
+            <div class="tomorrow-copy"><strong>Сначала загрузим задания</strong><p>Добавь скриншот домашнего задания. Помощник разберёт его, а решение по умолчанию останется скрытым.</p></div>
+            <button class="soft-button" data-action="ai"><span class="button-spark">✳</span> Добавить ДЗ</button>
+          </section>
+          <div class="quick-grid">
+            <button class="quick-card quick-schedule" data-action="schedule"><span class="quick-icon">◷</span><span><strong>Расписание</strong><small>Уроки и перемены</small></span><span class="quick-arrow">↗</span></button>
+            <button class="quick-card quick-ai" data-action="ai"><span class="quick-icon">✳</span><span><strong>ИИ-помощник</strong><small>Разобраться, а не списать</small></span><span class="quick-arrow">↗</span></button>
+          </div>
+          <div class="check-status"><span class="check-ring">✓</span><span><strong>Материалы проверяются автоматически</strong><small id="last-check-label">Пока проверены только задания внутри приложения.</small></span><button class="icon-button" id="check-now" aria-label="Проверить материалы сейчас">↻</button></div>
+          <p class="tiny-note">Без официального API приложение не читает школьный дневник автоматически. Новые задания можно добавить скриншотом или текстом.</p>
+        </div>
+      </section>
+
+      <section class="view view-schedule" data-view="schedule" id="view-schedule">
+        <div class="view-header"><div><p class="eyebrow">ТВОЙ ДЕНЬ ПО МИНУТАМ</p><h1>Расписание<span class="title-period">.</span></h1><p class="muted">Текущее время подсвечивает урок или перемену.</p></div><button class="round-action" data-action="settings" aria-label="Импорт расписания в настройках">＋</button></div>
+        <div class="schedule-control-row"><div class="class-selector-wrap"><span class="mini-label">КЛАСС</span><select id="class-selector" class="select-control"><option value="7А">7А</option><option value="7Б">7Б</option><option value="2">2</option><option value="3">3</option></select></div><div class="day-switcher" id="day-switcher"><button class="day-chip active" data-day="Пн">ПН</button><button class="day-chip" data-day="Вт">ВТ</button><button class="day-chip" data-day="Ср">СР</button><button class="day-chip" data-day="Чт">ЧТ</button><button class="day-chip" data-day="Пт">ПТ</button></div></div>
+        <div class="schedule-summary" id="schedule-summary"><div><span class="summary-icon">◷</span><span><small id="summary-label">ПЛАН НА СЕГОДНЯ</small><strong id="summary-title">Расписание не загружено</strong></span></div><div class="summary-time" id="summary-time">08:30—14:00</div></div>
+        <div class="schedule-scroll panel-scroll" id="schedule-list" aria-label="Уроки и перемены"></div>
+        <div class="schedule-footer-note"><span class="pulse-dot"></span><span>Время уроков рассчитано по локальному времени устройства</span></div>
+      </section>
+
+      <section class="view view-ai" data-view="ai" id="view-ai">
+        <div class="view-header ai-view-header"><div><p class="eyebrow">ТВОЙ УЧЕБНЫЙ НАПАРНИК</p><h1>ИИ-помощник<span class="title-period">.</span></h1><p class="muted">Понятно, коротко и с объяснением.</p></div><div class="ai-orb-mini"><span>✳</span></div></div>
+        <div class="ai-tabs"><button class="ai-mode active" data-ai-mode="homework">Разобрать ДЗ</button><button class="ai-mode" data-ai-mode="schedule">Расписание</button><button class="ai-mode" data-ai-mode="chat">Спросить</button><button class="ai-mode" data-ai-mode="local">Фото ИИ</button></div>
+        <div class="ai-scroll panel-scroll">
+          <div class="ai-pane active" data-ai-pane="homework">
+            <div class="upload-card" id="homework-upload-card">
+              <div class="upload-glow"></div><div class="upload-icon">⇧</div><div class="upload-copy"><strong>Пришли фото или скриншот</strong><p>Я распознаю задания и аккуратно добавлю их в список. Изображение отправится на ИИ-сервер только после нажатия «Анализировать».</p></div>
+              <label class="file-button">Выбрать изображение<input type="file" id="homework-file" accept="image/*" capture="environment" hidden></label>
+              <div id="homework-file-preview" class="file-preview hidden"></div>
+              <div class="upload-divider"><span>или вставь текст</span></div><textarea id="homework-text" class="text-area" placeholder="Например: Математика — № 345, 347; история — прочитать § 12…"></textarea>
+              <div class="field-row"><label class="field-label">Класс<select id="homework-class" class="select-control"><option>7А</option><option>7Б</option><option>2</option><option>3</option></select></label><label class="field-label">Когда сдавать<select id="homework-due" class="select-control"><option value="tomorrow">Завтра</option><option value="today">Сегодня</option><option value="custom">Другая дата</option></select></label></div>
+              <label class="field-label hidden" id="custom-due-wrap">Дата сдачи<input type="date" id="homework-custom-due" class="input-control"></label>
+              <button class="primary-button full-button" id="analyze-homework"><span>✳</span> Анализировать задание</button>
+              <p class="helper-text" id="ai-availability">Настоящий ИИ включится, когда на Netlify будет настроен серверный OPENAI_API_KEY.</p>
+            </div>
+            <div class="analysis-result hidden" id="homework-analysis-result"></div>
+          </div>
+          <div class="ai-pane" data-ai-pane="schedule">
+            <div class="upload-card compact-upload"><div class="upload-icon">▦</div><div class="upload-copy"><strong>Загрузи расписание</strong><p>Можно выбрать класс 7А, 7Б или несколько классов и дней недели.</p></div><label class="file-button">Выбрать фото<input type="file" id="schedule-file" accept="image/*" capture="environment" hidden></label><div id="schedule-file-preview" class="file-preview hidden"></div><textarea id="schedule-text" class="text-area" placeholder="Или введи: Пн — 1. Математика, 2. Русский язык…"></textarea><div class="field-row"><label class="field-label">Класс<input class="input-control" id="schedule-class" value="7А" maxlength="12"></label><label class="field-label">День<select id="schedule-day" class="select-control"><option>Пн</option><option>Вт</option><option>Ср</option><option>Чт</option><option>Пт</option><option>Сб</option><option>Вс</option></select></label></div><button class="primary-button full-button" id="analyze-schedule">Распознать и сохранить</button><p class="helper-text">После подтверждения предметы появятся в Live-расписании.</p></div><div class="analysis-result hidden" id="schedule-analysis-result"></div>
+          </div>
+          <div class="ai-pane" data-ai-pane="chat">
+            <div class="chat-shell"><div class="chat-intro"><div class="assistant-avatar">✳</div><div><strong>Давай разберёмся вместе</strong><p>Спроси о теме, формуле или задании — ответ будет без лишней воды.</p></div></div><div class="chat-messages" id="chat-messages"><div class="chat-message assistant-message">Привет! Пришли вопрос. Я объясню по шагам и помогу понять тему, а не просто переписать ответ.</div></div><form class="chat-input-row" id="chat-form"><input id="chat-input" class="input-control" placeholder="Например, объясни дроби…" autocomplete="off"><button class="send-button" aria-label="Отправить вопрос">↑</button></form><p class="helper-text">Не вводи пароли, адреса и личные данные.</p></div>
+          </div>
+          <div class="ai-pane" data-ai-pane="local">
+            <div class="local-ai-card">
+              <div class="local-ai-head"><div class="local-ai-mark">◉</div><div><p class="eyebrow">МОДЕЛЬ В БРАУЗЕРЕ</p><h2>Анализ фото без API-ключа</h2><p class="muted">SmolVLM 256M · WebGPU</p></div></div>
+              <p class="local-ai-copy">Это отдельный анализатор Hugging Face. При первом запуске он может скачать модельные файлы в браузер и выполнять распознавание на устройстве, если поддерживается WebGPU. Обучение весов здесь не происходит.</p>
+              <div class="local-ai-actions"><button class="primary-button" id="load-local-model">Запустить анализатор</button><a class="soft-button" href="https://huggingfacetb-smolvlm-256m-instruct-webgpu.static.hf.space/" target="_blank" rel="noopener noreferrer">Открыть отдельно ↗</a><a class="soft-button" href="https://huggingface.co/spaces/HuggingFaceTB/SmolVLM-256M-Instruct-WebGPU" target="_blank" rel="noopener noreferrer">Официальная страница ↗</a></div>
+              <p class="helper-text" id="local-ai-status" role="status">Анализатор пока не загружен. Нажми «Запустить анализатор», чтобы открыть его внутри приложения.</p>
+              <div class="local-ai-frame-wrap hidden" id="local-ai-frame-wrap"><iframe id="local-ai-frame" title="Моя Школа+ — анализ фотографий локальной моделью SmolVLM" data-src="https://huggingfacetb-smolvlm-256m-instruct-webgpu.static.hf.space/" loading="lazy" allow="webgpu; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+              <div class="local-ai-note"><strong>Как передать фото</strong><p>Загрузи фото прямо внутри открывшегося анализатора. Из-за изоляции браузера между разными сайтами выбранное в форме домашнего задания изображение нельзя автоматически передать во встроенный фрейм. Скопируй результат анализатора и добавь его в текст задания.</p></div>
+              <p class="helper-text">Если WebGPU недоступен или встроенное окно не загрузится, используй «Открыть отдельно». Работа зависит от браузера, памяти телефона и сети.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="view view-homework" data-view="homework" id="view-homework">
+        <div class="view-header"><div><p class="eyebrow">НИЧЕГО НЕ ЗАБЫТО</p><h1>Домашние задания<span class="title-period">.</span></h1><p class="muted">Решения скрыты, пока ты сам не решишь открыть их.</p></div><button class="round-action" data-action="ai" aria-label="Добавить задание">＋</button></div>
+        <div class="homework-filter-row"><button class="filter-chip active" data-hw-filter="tomorrow">На завтра <span id="tomorrow-count">0</span></button><button class="filter-chip" data-hw-filter="all">Все задания</button><button class="filter-chip" data-hw-filter="done">Выполненные</button></div>
+        <div class="homework-scroll panel-scroll" id="homework-list"></div>
+        <div class="homework-bottom-action"><button class="primary-button full-button" id="prepare-tomorrow"><span>✳</span> Подготовить решения на завтра</button><p class="helper-text">Решения создаются только при настроенном ИИ-сервере и остаются скрытыми.</p></div>
+      </section>
+
+      <section class="view view-settings" data-view="settings" id="view-settings">
+        <div class="view-header"><div><p class="eyebrow">ПОД СЕБЯ</p><h1>Настройки<span class="title-period">.</span></h1><p class="muted">Твой стиль, расписание и разрешения.</p></div><div class="settings-avatar" id="settings-avatar">У</div></div>
+        <div class="settings-scroll panel-scroll">
+          <section class="settings-card"><div class="settings-card-title"><span class="settings-symbol">◉</span><div><strong>Профиль</strong><p>Как к тебе обращаться</p></div></div><div class="field-row"><label class="field-label">Имя<input id="profile-name" class="input-control" maxlength="30" placeholder="Имя"></label><label class="field-label">Фамилия <span class="muted">(необязательно)</span><input id="profile-surname" class="input-control" maxlength="50" placeholder="Фамилия"></label></div><button class="soft-button" id="save-profile">Сохранить профиль</button></section>
+          <section class="settings-card"><div class="settings-card-title"><span class="settings-symbol">◐</span><div><strong>Внешний вид</strong><p>Тема и цвет акцента</p></div></div><div class="theme-options"><button class="theme-option" data-theme="light"><span class="theme-preview light-preview"></span><strong>Светлая</strong></button><button class="theme-option" data-theme="dark"><span class="theme-preview dark-preview"></span><strong>Тёмная</strong></button><button class="theme-option" data-theme="navy"><span class="theme-preview navy-preview"></span><strong>Тёмно-синяя</strong></button></div><p class="mini-label color-title">ЦВЕТ ИНТЕРФЕЙСА · 10 ВАРИАНТОВ</p><div class="color-palette" id="color-palette"></div><div class="custom-color-row"><span><strong>Своя палитра</strong><small>Выбери главный и дополнительный цвета</small></span><label class="color-input-wrap" aria-label="Главный цвет"><small>Главный</small><input type="color" id="custom-color" value="#8b7bff" aria-label="Главный цвет"></label><label class="color-input-wrap" aria-label="Дополнительный цвет"><small>Доп.</small><input type="color" id="custom-secondary-color" value="#5adacb" aria-label="Дополнительный цвет"></label></div><div class="settings-card-footer"><button class="soft-button" id="save-appearance">Применить стиль</button></div></section>
+          <section class="settings-card"><div class="settings-card-title"><span class="settings-symbol">▦</span><div><strong>Расписание</strong><p>Импорт скриншота и управление классами</p></div></div><p class="settings-description">Импорт расписания защищён проверкой PIN на сервере. Для включения задайте в Netlify переменную SCHEDULE_ADMIN_PIN со значением 1414.</p><div class="field-row"><label class="field-label">Класс<input id="settings-schedule-class" class="input-control" value="7А" maxlength="12"></label><label class="field-label">PIN для импорта<input id="schedule-pin" class="input-control" inputmode="numeric" type="password" maxlength="12" placeholder="Введите PIN"></label></div><label class="file-button settings-file-button">Выбрать скриншот расписания<input type="file" id="settings-schedule-file" accept="image/*" hidden></label><div id="admin-schedule-file-preview" class="file-preview hidden"></div><button class="primary-button full-button" id="admin-import">Проверить PIN и распознать</button><div class="analysis-result hidden" id="admin-schedule-analysis-result"></div><p class="helper-text" id="admin-import-status">PIN не хранится в интерфейсе. Если серверная переменная не настроена, импорт останется заблокированным.</p></section>
+          <section class="settings-card"><div class="settings-card-title"><span class="settings-symbol">♧</span><div><strong>Разрешения</strong><p>Только по твоему согласию</p></div></div><div class="permission-row"><span class="permission-icon">♧</span><div class="permission-copy"><strong>Уведомления за 5 минут</strong><p id="notification-status">Напомним, пока приложение открыто.</p></div><button class="toggle" id="notification-toggle" role="switch" aria-checked="false" aria-label="Включить уведомления"><span></span></button></div><div class="permission-row"><span class="permission-icon">▣</span><div class="permission-copy"><strong>Камера</strong><p id="camera-status">Для фото задания можно выбрать камеру через кнопку загрузки.</p></div><button class="soft-button small-soft" id="camera-permission">Проверить</button></div><div class="settings-note">Уведомления в браузере не гарантируются после закрытия вкладки. Для push-уведомлений нужен отдельно настроенный сервис.</div></section>
+          <section class="settings-card"><div class="settings-card-title"><span class="settings-symbol">☁</span><div><strong>Облачная синхронизация</strong><p>Одинаковые расписание и ДЗ на разных устройствах</p></div></div><p class="settings-description">Создай облако и введи тот же секретный код на другом устройстве. Код даёт доступ ко всем данным этого профиля — не публикуй его.</p><label class="field-label">Секретный код облака<input id="cloud-sync-code" class="input-control" autocomplete="off" autocapitalize="none" spellcheck="false" placeholder="Нажми «Создать облако» или вставь код"></label><div class="result-actions"><button class="primary-button" id="create-cloud-sync">Создать / проверить облако</button><button class="soft-button" id="connect-cloud-sync">Подключить код</button><button class="soft-button" id="copy-cloud-code">Копировать код</button></div><p class="helper-text" id="cloud-sync-status">Пока только локальное сохранение. Для облака нужен опубликованный Netlify Function.</p></section>
+          <section class="settings-card compact-settings"><div class="settings-card-title"><span class="settings-symbol">⟳</span><div><strong>Данные приложения</strong><p>Можно экспортировать резервную копию</p></div></div><button class="text-button danger-text" id="export-data">Экспортировать мои данные ↗</button></section>
+          <p class="footer-brand">моя школа <span>·</span> Сделано для спокойной учёбы</p>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" id="bottom-nav" aria-label="Главная навигация">
+      <button class="nav-item active" data-nav="home"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 10 9-7 9 7v10a1 1 0 0 1-1 1h-5v-7H9v7H4a1 1 0 0 1-1-1z"/></svg></span><span>Главная</span></button>
+      <button class="nav-item" data-nav="schedule"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span><span>Расписание</span></button>
+      <button class="nav-item nav-ai" data-nav="ai"><span class="nav-ai-bubble"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/><path d="m19 15 .8 2.2L22 18l-2.2.8L19 21l-.8-2.2L16 18l2.2-.8z"/></svg></span><span>ИИ-помощник</span></button>
+      <button class="nav-item" data-nav="homework"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h10a2 2 0 0 1 2 2v14H6V6a2 2 0 0 1 2-2Z"/><path d="M4 8v12h14M9 9h7M9 13h7M9 17h4"/></svg></span><span>ДЗ</span></button>
+      <button class="nav-item" data-nav="settings"><span class="nav-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="m19.4 15 .1.1 1.1 1.9-2 3.4-2.2-.7a8 8 0 0 1-1.9 1.1l-.4 2.2H9.9l-.4-2.2a8 8 0 0 1-1.9-1.1l-2.2.7-2-3.4 1.1-1.9a7 7 0 0 1 0-2.2l-1.1-1.9 2-3.4 2.2.7a8 8 0 0 1 1.9-1.1l.4-2.2h4.2l.4 2.2a8 8 0 0 1 1.9 1.1l2.2-.7 2 3.4-1.1 1.9a7 7 0 0 1 0 2.2Z" transform="translate(0 -1) scale(.95)"/></svg></span><span>Настройки</span></button>
+    </nav>
+  </div>
+
+  <div class="onboarding-layer hidden" id="onboarding-layer" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
+    <div class="onboarding-stars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b></b><b></b></div>
+    <div class="onboarding-window" id="onboarding-window">
+      <div class="onboard-brand"><span class="brand-mark"><svg viewBox="0 0 32 32"><path d="M5 10.5 16 4l11 6.5v13L16 30 5 23.5z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m10 15 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span>моя школа</span></div>
+      <div class="onboard-progress"><span id="onboard-progress-fill"></span></div>
+      <div id="onboarding-content"></div>
+    </div>
+  </div>
+
+  <div class="preparation-layer hidden" id="preparation-layer" role="status" aria-live="polite"><div class="prep-blur prep-blur-a"></div><div class="prep-blur prep-blur-b"></div><div class="prep-content"><div class="prep-logo"><span>✳</span></div><p class="eyebrow">ПОДГОТОВКА ПРОСТРАНСТВА</p><h2 id="prep-title">Подождите…</h2><p id="prep-description">Подбираем интерфейс под ваши настройки.</p><div class="prep-track"><span id="prep-track-fill"></span></div><div class="prep-checks" id="prep-checks"><span>✓ Настройки</span><span>◷ Расписание</span><span>✳ Помощник</span></div><p class="prep-note">Подготовка займёт только время, нужное для реальной настройки приложения.</p></div><div class="floating-orbs" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div></div>
+
+  <div class="welcome-scene hidden" id="welcome-scene" role="status"><div class="welcome-sky"><div class="scene-sun"></div><div class="scene-horizon"></div><div class="scene-cloud scene-cloud-one"></div><div class="scene-cloud scene-cloud-two"></div><div class="scene-birds">⌁　⌁　　 ⌁</div><div class="scene-stars">✦　 ·　　 ✧　　·</div></div><div class="welcome-caption"><p id="welcome-time">Доброе утро</p><h1 id="welcome-name">Рады тебя видеть.</h1><span>Твоё пространство готово</span></div></div>
+
+  <div class="modal-backdrop hidden" id="image-modal" role="dialog" aria-modal="true" aria-label="Просмотр изображения"><button class="modal-close" id="close-image-modal" aria-label="Закрыть просмотр">×</button><img id="modal-image" alt="Загруженное изображение"></div>
+  <div class="toast-region" id="toast-region" aria-live="polite"></div>
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
