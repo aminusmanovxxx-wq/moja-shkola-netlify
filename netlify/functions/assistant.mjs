@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-const MODEL_DEFAULT = "@cf/google/gemma-4-26b-a4b-it";
+const MODEL_DEFAULT = "gpt-4o-mini";
 const WINDOW_MS = 60_000;
 const LIMIT_PER_WINDOW = 14;
 const calls = new Map();
@@ -116,28 +116,22 @@ export default async (request, context) => {
     if (providedPin.length > 40 || providedPin !== expectedPin) return json({ code: "PIN_REJECTED", error: "PIN не подошёл. Расписание не отправлено на анализ." }, 403);
   }
 
-  const accountId = env("CLOUDFLARE_ACCOUNT_ID");
-  const apiToken = env("CLOUDFLARE_API_TOKEN");
-  if (!accountId || !apiToken) return json({
-    code: "AI_NOT_CONFIGURED",
-    error: "ИИ ещё не подключён. В Netlify добавь CLOUDFLARE_ACCOUNT_ID и CLOUDFLARE_API_TOKEN как серверные переменные Functions. Не вставляй токен в код или GitHub."
-  }, 503);
-  if (!/^[a-f0-9]{32}$/i.test(accountId)) return json({
-    code: "AI_PROVIDER_CONFIG",
-    error: "CLOUDFLARE_ACCOUNT_ID должен быть 32-значным ID аккаунта Cloudflare."
+  // Netlify AI Gateway injects these at runtime once a production deploy exists
+  // and AI Features are enabled. Do not add third-party keys to the browser or repo.
+  const apiKey = env("OPENAI_API_KEY");
+  const baseURL = env("OPENAI_BASE_URL");
+  if (!apiKey || !baseURL) return json({
+    code: "AI_GATEWAY_NOT_READY",
+    error: "Встроенный ИИ Netlify ещё не активирован. Сделай хотя бы одну production-публикацию и проверь, что AI Features включены в команде Netlify. Отдельный API-ключ не нужен."
   }, 503);
 
   try {
-    const client = new OpenAI({
-      apiKey: apiToken,
-      baseURL: `https://api.cloudflare.com/client/v4/accounts/${accountId}/ai/v1`,
-      timeout: 50_000,
-      maxRetries: 0,
-    });
-    const model = env("CLOUDFLARE_MODEL") || MODEL_DEFAULT;
+    const model = env("OPENAI_MODEL") || MODEL_DEFAULT;
+    const client = new OpenAI({ timeout: 50_000, maxRetries: 0 });
     const completion = await client.chat.completions.create({
       model,
       messages: getMessages(type, payload),
+      response_format: { type: "json_object" },
       max_tokens: 1800,
       temperature: 0.3,
     }, { signal: AbortSignal.timeout(50_000) });
@@ -147,7 +141,7 @@ export default async (request, context) => {
     try {
       result = parseJson(raw);
     } catch {
-      console.error("Workers AI response was not valid JSON");
+      console.error("AI Gateway returned a response that was not valid JSON");
       return json({ code: "AI_INVALID_RESPONSE", error: "Не получилось разобрать ответ ИИ. Попробуй повторить запрос." }, 502);
     }
     return json({ ok: true, model: completion.model || model, result });
@@ -156,10 +150,10 @@ export default async (request, context) => {
     if (message === "UNSUPPORTED_IMAGE_TYPE") return json({ error: "Поддерживаются изображения JPG, PNG и WEBP." }, 415);
     if (message === "IMAGE_TOO_LARGE") return json({ error: "Изображение слишком большое. Выбери более лёгкий скриншот." }, 413);
     const status = Number(error?.status) || 0;
-    if (status === 401 || status === 403) return json({ code: "AI_AUTH_ERROR", error: "Cloudflare отклонил запрос. Проверь API-токен, его разрешения и доступность выбранной модели." }, 502);
-    if (status === 429) return json({ code: "AI_RATE_LIMIT", error: "Достигнут дневной бесплатный лимит или предел скорости Workers AI. Попробуй позже." }, 429);
-    if (status === 400 || status === 404) return json({ code: "AI_PROVIDER_CONFIG", error: "Workers AI не смог использовать выбранную модель. Проверь CLOUDFLARE_MODEL и имя модели в каталоге Cloudflare." }, 502);
-    console.error("Workers AI request failed", status, message.slice(0, 160));
-    return json({ code: "AI_REQUEST_FAILED", error: "Не удалось связаться с Workers AI. Проверь соединение и настройки Cloudflare в Netlify." }, 502);
+    if (status === 401 || status === 403) return json({ code: "AI_AUTH_ERROR", error: "Netlify AI Gateway не принял запрос. Проверь настройки AI Features в Netlify." }, 502);
+    if (status === 429) return json({ code: "AI_RATE_LIMIT", error: "Достигнут лимит частоты запросов или закончилась квота Netlify. Попробуй позже." }, 429);
+    if (status === 400 || status === 404) return json({ code: "AI_PROVIDER_CONFIG", error: "Netlify AI Gateway не смог использовать выбранную модель. Проверь доступность модели." }, 502);
+    console.error("AI Gateway request failed", status, message.slice(0, 160));
+    return json({ code: "AI_REQUEST_FAILED", error: "Не удалось связаться со встроенным ИИ Netlify. Проверь подключение и лимиты аккаунта." }, 502);
   }
 };
