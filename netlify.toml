@@ -1,0 +1,20 @@
+[build]
+  publish = "public"
+  functions = "netlify/functions"
+  command = "base64 -d source-bundle.b64 > /tmp/moja-shkola.zip && rm -rf /tmp/moja-shkola && mkdir -p /tmp/moja-shkola && unzip -q /tmp/moja-shkola.zip -d /tmp/moja-shkola && cp -a /tmp/moja-shkola/moja-shkola-netlify/. . && npm test && npm run typecheck"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[headers]]
+  for = "/manifest.webmanifest"
+  [headers.values]
+    Content-Type = "application/manifest+json; charset=utf-8"
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(self), geolocation=()"
