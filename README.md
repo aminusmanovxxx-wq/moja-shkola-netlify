@@ -1,5 +1,14 @@
 # Моя школа — учебный помощник
 
-Netlify-ready school planner with schedule, homework assistant and cloud sync functions.
+Адаптивное учебное приложение: расписание, домашние задания, текстовый анализ, ИИ endpoint и облачная синхронизация.
 
-Source package: `moja-shkola-netlify-updated.zip` attached in the project chat. This repository is being populated for Netlify deployment.
+## Развёртывание в Netlify
+В Netlify выбери **Add new project → Import an existing project → GitHub**, подключи этот репозиторий и оставь `netlify.toml` из корня.
+
+Добавь `OPENAI_API_KEY` в Netlify → Site configuration → Environment variables для включения настоящих нейросетевых ответов. Не помещай ключ в клиентский код или Git.
+
+Облачное хранилище работает на стороне Netlify; синхронизация требует индивидуального длинного токена. Доступ к МЭШ без официального API этот проект не имитирует.
+
+## Локальная проверка
+`npm test`
+`npm run typecheck`
