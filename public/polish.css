@@ -1,0 +1,57 @@
+/* Моя Школа+ visual polish — readable type, clearer surfaces, lightweight motion. */
+:root {
+  --font-body: "DM Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Manrope", "DM Sans", system-ui, sans-serif;
+}
+body { font-size: 15px; line-height: 1.58; }
+.brand-mark.brand-huggingface {
+  font-family: system-ui, sans-serif;
+  font-size: 25px;
+  line-height: 1;
+  background: linear-gradient(145deg, #ffe58b, #ffbd5a 55%, #ff9f70);
+  color: #28203b;
+  box-shadow: 0 7px 22px rgba(255, 188, 86, .22);
+}
+.brand-copy strong { font-size: 16px; letter-spacing: -.45px; }
+.brand-copy small { font-size: 9px; letter-spacing: 1.35px; }
+.eyebrow { font-size: 10px; letter-spacing: 1.65px; }
+.greeting-subtitle, .hero-main p:last-child { font-size: 13px; line-height: 1.65; }
+.hero-main h2 { line-height: 1.25; }
+.section-heading h2 { font-size: 20px; }
+.tomorrow-copy strong, .quick-card strong { font-size: 13px; }
+.tomorrow-copy p, .quick-card small { font-size: 11px; line-height: 1.55; }
+.quick-card { border-radius: 19px; }
+.ai-mode { font-size: 11px; font-weight: 700; }
+.ai-view-header .muted, .helper-text, .local-ai-copy, .local-ai-note p {
+  font-size: 12px;
+  line-height: 1.7;
+}
+.local-ai-mark {
+  font-size: 27px;
+  background: linear-gradient(145deg, #ffe58b, #ffbd5a 58%, #ff9f70);
+  color: #29203b;
+  border-color: rgba(255, 193, 88, .5);
+}
+.primary-button, .soft-button, .hero-action { font-size: 12px; }
+.settings-description, .settings-card-title p { font-size: 12px; line-height: 1.65; }
+.nav-item { font-size: 9px; }
+button, input, textarea, select { -webkit-tap-highlight-color: transparent; }
+button { transition: transform .16s ease, border-color .16s ease, background-color .16s ease; }
+button:active { transform: scale(.985); }
+::selection { background: color-mix(in srgb, var(--accent) 36%, transparent); color: inherit; }
+@media (max-width: 620px) {
+  body { font-size: 14px; }
+  .brand-mark.brand-huggingface { font-size: 23px; }
+  .brand-copy strong { font-size: 15px; }
+  .brand-copy small { font-size: 8px; letter-spacing: 1.1px; }
+  .eyebrow { font-size: 9px; }
+  .greeting-subtitle { font-size: 11px; line-height: 1.55; }
+  .hero-main p:last-child { font-size: 11px; }
+  .tomorrow-copy strong, .quick-card strong { font-size: 11px; }
+  .tomorrow-copy p, .quick-card small { font-size: 10px; }
+  .ai-view-header .muted, .helper-text, .local-ai-copy, .local-ai-note p { font-size: 11px; }
+  .nav-item { font-size: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  button { transition: none; }
+}
