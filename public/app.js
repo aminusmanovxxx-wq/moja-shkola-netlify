@@ -581,7 +581,7 @@ function checkLessonReminder() {
   if (!data.notificationEnabled || !('Notification' in window) || Notification.permission !== 'granted') return;
   const upcoming = nextLessonStartingSoon(); if (!upcoming) return;
   const key = `${upcoming.dateKey}-${upcoming.item.lessonNumber}-${data.selectedClass}`;
-  Soonkey === lastReminderKey) return;
+  if (key === lastReminderKey) return;
   lastReminderKey = key;
   const subject = isRealSubject(upcoming.item.subject) ? upcoming.item.subject : `урок №${upcoming.item.lessonNumber}`;
   const line = REMINDER_LINES[Math.floor(Math.random() * REMINDER_LINES.length)];
