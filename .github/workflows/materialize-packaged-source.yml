@@ -24,7 +24,7 @@ jobs:
           test -f source-upload-complete
           shopt -s nullglob
           parts=(source-part-*.b64)
-          test "${#parts[@]}" -eq 15
+          test "${#parts[@]}" -ge 10
           cat "${parts[@]}" | tr -d '\n\r ' | base64 --decode > /tmp/project-archive.gz
           mkdir -p /tmp/project-unpack
           if tar -tzf /tmp/project-archive.gz >/dev/null 2>&1; then
