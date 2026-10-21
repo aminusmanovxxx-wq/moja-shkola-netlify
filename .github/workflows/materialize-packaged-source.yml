@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - source-upload-complete
+      - source-upload-retry
 
 permissions:
   contents: write
@@ -27,21 +28,25 @@ jobs:
           test "${#parts[@]}" -ge 10
           cat "${parts[@]}" | tr -d '\n\r ' | base64 --decode > /tmp/project-archive.gz
           mkdir -p /tmp/project-unpack
-          if tar -tzf /tmp/project-archive.gz >/dev/null 2>&1; then
-            tar -xzf /tmp/project-archive.gz -C /tmp/project-unpack
+          # Some transfer paths preserve a usable TAR/ZIP payload but alter the
+          # gzip trailer; inspect the decoded payload before rejecting the files.
+          set +e
+          gzip -dc /tmp/project-archive.gz > /tmp/project-archive.bin
+          gzip_status=$?
+          set -e
+          if tar -tf /tmp/project-archive.bin >/dev/null 2>&1; then
+            tar -xf /tmp/project-archive.bin -C /tmp/project-unpack
+          elif unzip -tq /tmp/project-archive.bin >/dev/null 2>&1; then
+            unzip -q /tmp/project-archive.bin -d /tmp/project-unpack
           else
-            gzip -dc /tmp/project-archive.gz > /tmp/project-archive.bin
-            if unzip -tq /tmp/project-archive.bin >/dev/null 2>&1; then
-              unzip -q /tmp/project-archive.bin -d /tmp/project-unpack
-            else
-              echo "Archive is neither a gzip-compressed tar nor a gzip-compressed ZIP." >&2
-              exit 1
-            fi
+            echo "Gzip decompression status: $gzip_status" >&2
+            echo "Decoded content is not a valid TAR or ZIP archive." >&2
+            exit 1
           fi
           source_root="$(find /tmp/project-unpack -type f -name netlify.toml -not -path '*/node_modules/*' -print -quit | xargs -r dirname)"
           test -n "$source_root"
           cp -a "$source_root"/. .
-          rm -f source-part-*.b64 source-upload-complete source-bundle.b64
+          rm -f source-part-*.b64 source-upload-complete source-upload-retry source-bundle.b64
           git add -A
           if git diff --cached --quiet; then
             echo "Project files were already materialized."
