@@ -1,0 +1,1 @@
+Deployment trigger created on 2026-10-21. If Netlify continuous deployment is connected to this repository, this commit should start a build. This file is safe to remove after verifying the deployment.
