@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/polish.css">
   <title>Моя школа — учебный помощник</title>
 </head>
 <body>
@@ -18,7 +19,7 @@
     <div class="ambient ambient-two" aria-hidden="true"></div>
     <header class="topbar">
       <button class="brand lock-button" data-action="home" aria-label="Главная">
-        <span class="brand-mark"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M5 10.5 16 4l11 6.5v13L16 30 5 23.5z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m10 15 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+        <span class="brand-mark brand-huggingface" aria-hidden="true">🤗</span>
         <span class="brand-copy"><strong>моя школа</strong><small>УЧЕБНЫЙ ПОМОЩНИК</small></span>
       </button>
       <div class="topbar-right">
@@ -102,7 +103,7 @@
           </div>
           <div class="ai-pane" data-ai-pane="local">
             <div class="local-ai-card">
-              <div class="local-ai-head"><div class="local-ai-mark">◉</div><div><p class="eyebrow">МОДЕЛЬ В БРАУЗЕРЕ</p><h2>Анализ фото без API-ключа</h2><p class="muted">SmolVLM 256M · WebGPU</p></div></div>
+              <div class="local-ai-head"><div class="local-ai-mark" aria-hidden="true">🤗</div><div><p class="eyebrow">МОДЕЛЬ В БРАУЗЕРЕ</p><h2>Анализ фото без API-ключа</h2><p class="muted">SmolVLM 256M · WebGPU</p></div></div>
               <p class="local-ai-copy">Это отдельный анализатор Hugging Face. При первом запуске он может скачать модельные файлы в браузер и выполнять распознавание на устройстве, если поддерживается WebGPU. Обучение весов здесь не происходит.</p>
               <div class="local-ai-actions"><button class="primary-button" id="load-local-model">Запустить анализатор</button><a class="soft-button" href="https://huggingfacetb-smolvlm-256m-instruct-webgpu.static.hf.space/" target="_blank" rel="noopener noreferrer">Открыть отдельно ↗</a><a class="soft-button" href="https://huggingface.co/spaces/HuggingFaceTB/SmolVLM-256M-Instruct-WebGPU" target="_blank" rel="noopener noreferrer">Официальная страница ↗</a></div>
               <p class="helper-text" id="local-ai-status" role="status">Анализатор пока не загружен. Нажми «Запустить анализатор», чтобы открыть его внутри приложения.</p>
@@ -147,7 +148,7 @@
   <div class="onboarding-layer hidden" id="onboarding-layer" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
     <div class="onboarding-stars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><b></b><b></b></div>
     <div class="onboarding-window" id="onboarding-window">
-      <div class="onboard-brand"><span class="brand-mark"><svg viewBox="0 0 32 32"><path d="M5 10.5 16 4l11 6.5v13L16 30 5 23.5z" fill="none" stroke="currentColor" stroke-width="2"/><path d="m10 15 4 4 8-8" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/></svg></span><span>моя школа</span></div>
+      <div class="onboard-brand"><span class="brand-mark brand-huggingface" aria-hidden="true">🤗</span><span>моя школа</span></div>
       <div class="onboard-progress"><span id="onboard-progress-fill"></span></div>
       <div id="onboarding-content"></div>
     </div>
