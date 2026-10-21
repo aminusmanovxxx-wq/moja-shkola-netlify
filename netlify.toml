@@ -1,7 +1,7 @@
 [build]
   publish = "public"
   functions = "netlify/functions"
-  command = "base64 -d source-bundle.b64 > /tmp/moja-shkola.zip && rm -rf /tmp/moja-shkola && mkdir -p /tmp/moja-shkola && unzip -q /tmp/moja-shkola.zip -d /tmp/moja-shkola && cp -a /tmp/moja-shkola/moja-shkola-netlify/. . && npm test && npm run typecheck"
+  command = "cat source-part-*.b64 | base64 -d > /tmp/moja-shkola.tar.gz && rm -rf /tmp/moja-shkola && mkdir -p /tmp/moja-shkola && tar -xzf /tmp/moja-shkola.tar.gz -C /tmp/moja-shkola && cp -a /tmp/moja-shkola/moja-shkola-netlify/. . && npm test && npm run typecheck"
 
 [functions]
   node_bundler = "esbuild"
