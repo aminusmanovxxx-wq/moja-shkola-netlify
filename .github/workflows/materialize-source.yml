@@ -1,0 +1,31 @@
+name: Materialize project source
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - source-bundle.b64
+      - .github/workflows/materialize-source.yml
+
+permissions:
+  contents: write
+
+jobs:
+  unpack:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Restore project files
+        run: |
+          test -f source-bundle.b64
+          base64 --decode source-bundle.b64 > /tmp/moja-shkola.zip
+          mkdir -p /tmp/moja-shkola
+          unzip -q /tmp/moja-shkola.zip -d /tmp/moja-shkola
+          cp -a /tmp/moja-shkola/moja-shkola-netlify/. .
+          rm -f source-bundle.b64
+          git add -A
+          git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'Add complete Moja Shkola source'
+          git push
