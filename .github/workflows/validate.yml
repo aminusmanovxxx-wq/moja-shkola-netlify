@@ -23,3 +23,14 @@ jobs:
         run: npm test
       - name: Check JavaScript syntax
         run: npm run typecheck
+      - name: Package complete project ZIP
+        if: github.event_name != 'pull_request'
+        run: zip -qr moja-shkola-plus.zip . -x ".git/*" "node_modules/*" ".netlify/*" "moja-shkola-plus.zip"
+      - name: Upload complete project ZIP
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: moja-shkola-plus-project
+          path: moja-shkola-plus.zip
+          if-no-files-found: error
+          retention-days: 30
